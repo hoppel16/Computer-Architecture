@@ -10,11 +10,14 @@ class CPU:
         self.reg = [0] * 8
 
         self.pc = 0
+        self.sp = 244
 
         self.branchtable = {}
         self.branchtable[130] = self.deal_with_LDI
         self.branchtable[71] = self.deal_with_PRN
         self.branchtable[162] = self.deal_with_MUL
+        self.branchtable[69] = self.deal_with_PUSH
+        self.branchtable[70] = self.deal_with_POP
         self.branchtable[1] = self.deal_with_HLT
 
     def load(self):
@@ -42,8 +45,8 @@ class CPU:
     def ram_read(self, mar):
         return self.reg[mar]
 
-    def ram_write(self, val, mdr):
-        self.reg[mdr] = val
+    def ram_write(self, mdr, mar):
+        self.reg[mar] = mdr
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -79,8 +82,8 @@ class CPU:
 
         print()
 
-    def deal_with_LDI(self, reg, val):
-        self.ram_write(val, reg)
+    def deal_with_LDI(self, mar, mdr):
+        self.ram_write(mdr, mar)
         self.pc += 3
 
     def deal_with_PRN(self, mar, foo):
@@ -90,6 +93,16 @@ class CPU:
     def deal_with_MUL(self, op_a, op_b):
         self.alu("MUL", op_a, op_b)
         self.pc += 3
+
+    def deal_with_PUSH(self, mar, foo):
+        self.sp -= 1
+        self.ram[self.sp] = self.ram_read(mar)
+        self.pc += 2
+
+    def deal_with_POP(self, mar, foo):
+        self.ram_write(self.ram[self.sp], mar)
+        self.sp += 1
+        self.pc += 2
 
     def deal_with_HLT(self, foo, bar):
         exit(0)
