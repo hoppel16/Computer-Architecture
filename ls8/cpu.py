@@ -11,6 +11,12 @@ class CPU:
 
         self.pc = 0
 
+        self.branchtable = {}
+        self.branchtable[130] = self.deal_with_LDI
+        self.branchtable[71] = self.deal_with_PRN
+        self.branchtable[162] = self.deal_with_MUL
+        self.branchtable[1] = self.deal_with_HLT
+
     def load(self):
         """Load a program into memory."""
 
@@ -18,17 +24,18 @@ class CPU:
 
         # For now, we've just hardcoded a program:
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+        try:
+            file_location = sys.argv[1]
+            program = open(file_location)
+        except Exception:
+            print("ERROR: Could not locate file")
+            exit(1)
 
         for instruction in program:
+            instruction = int(instruction.strip().split("#")[0], 2)
+            if instruction == "":
+                continue
+
             self.ram[address] = instruction
             address += 1
 
@@ -43,7 +50,12 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == "SUB":
+            self.reg[reg_a] -= self.reg[reg_b]
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
+        elif op == "DIV":
+            self.reg[reg_a] /= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -67,21 +79,29 @@ class CPU:
 
         print()
 
+    def deal_with_LDI(self, reg, val):
+        self.ram_write(val, reg)
+        self.pc += 3
+
+    def deal_with_PRN(self, mar, foo):
+        print(self.ram_read(mar))
+        self.pc += 2
+
+    def deal_with_MUL(self, op_a, op_b):
+        self.alu("MUL", op_a, op_b)
+        self.pc += 3
+
+    def deal_with_HLT(self, foo, bar):
+        exit(0)
+
     def run(self):
         ir = self.ram[self.pc]
         operand_a = self.ram[self.pc + 1]
         operand_b = self.ram[self.pc + 2]
 
-        if ir == 130:
-            self.ram_write(operand_b, operand_a)
-            self.pc += 3
-        elif ir == 71:
-            print(self.ram_read(operand_a))
-            self.pc += 2
-        elif ir == 1:
-            quit(0)
-        else:
+        if ir not in self.branchtable:
             print(f"UNKNOWN BYTE: {bin(ir)} ----- {ir}")
             self.pc += 1
 
+        self.branchtable[ir](operand_a, operand_b)
         self.run()
