@@ -100,6 +100,9 @@ class CPU:
         self.pc += 2
 
     def deal_with_POP(self, mar, foo):
+        if self.sp == 244:
+            print("Stack is empty")
+            return
         self.ram_write(self.ram[self.sp], mar)
         self.sp += 1
         self.pc += 2
