@@ -15,9 +15,12 @@ class CPU:
         self.branchtable = {}
         self.branchtable[130] = self.deal_with_LDI
         self.branchtable[71] = self.deal_with_PRN
+        self.branchtable[160] = self.deal_with_ADD
         self.branchtable[162] = self.deal_with_MUL
         self.branchtable[69] = self.deal_with_PUSH
         self.branchtable[70] = self.deal_with_POP
+        self.branchtable[80] = self.deal_with_CALL
+        self.branchtable[17] = self.deal_with_RET
         self.branchtable[1] = self.deal_with_HLT
 
     def load(self):
@@ -34,13 +37,20 @@ class CPU:
             print("ERROR: Could not locate file")
             exit(1)
 
+        print(f"LOADING INSTRUCTIONS FOR {file_location}")
+
         for instruction in program:
-            instruction = int(instruction.strip().split("#")[0], 2)
-            if instruction == "":
+            instruction = instruction.strip().split("#")[0]
+            try:
+                instruction = int(instruction, 2)
+            except Exception:
                 continue
 
             self.ram[address] = instruction
             address += 1
+
+        print("FINISHED LOADING INSTRUCTIONS")
+        print("---------------------------------------------")
 
     def ram_read(self, mar):
         return self.reg[mar]
@@ -90,6 +100,10 @@ class CPU:
         print(self.ram_read(mar))
         self.pc += 2
 
+    def deal_with_ADD(self, op_a, op_b):
+        self.alu("ADD", op_a, op_b)
+        self.pc += 3
+
     def deal_with_MUL(self, op_a, op_b):
         self.alu("MUL", op_a, op_b)
         self.pc += 3
@@ -107,6 +121,19 @@ class CPU:
         self.sp += 1
         self.pc += 2
 
+    def deal_with_CALL(self, op_a, op_b):
+        ret_addr = self.pc + 2
+        self.sp -= 1
+        self.ram[self.sp] = ret_addr
+
+        self.pc = self.reg[op_a]
+
+    def deal_with_RET(self, op_a, op_b):
+        ret_addr = self.ram[self.sp]
+        self.sp += 1
+
+        self.pc = ret_addr
+
     def deal_with_HLT(self, foo, bar):
         exit(0)
 
@@ -115,9 +142,10 @@ class CPU:
         operand_a = self.ram[self.pc + 1]
         operand_b = self.ram[self.pc + 2]
 
-        if ir not in self.branchtable:
+        try:
+            self.branchtable[ir](operand_a, operand_b)
+        except KeyError:
             print(f"UNKNOWN BYTE: {bin(ir)} ----- {ir}")
             self.pc += 1
 
-        self.branchtable[ir](operand_a, operand_b)
         self.run()
