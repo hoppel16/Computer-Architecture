@@ -31,6 +31,7 @@ class CPU:
         self.branchtable[71] = self.deal_with_PRN
         self.branchtable[80] = self.deal_with_CALL
         self.branchtable[85] = self.deal_with_JEQ
+        self.branchtable[86] = self.deal_with_JNE
         self.branchtable[130] = self.deal_with_LDI
         self.branchtable[160] = self.deal_with_ADD
         self.branchtable[162] = self.deal_with_MUL
@@ -164,6 +165,12 @@ class CPU:
 
     def deal_with_JEQ(self, op_a, op_b):
         if self.equal is Equal.EQUAL:
+            self.pc = self.reg[op_a]
+        else:
+            self.pc += 2
+
+    def deal_with_JNE(self, op_a, op_b):
+        if self.equal is not Equal.EQUAL:
             self.pc = self.reg[op_a]
         else:
             self.pc += 2
