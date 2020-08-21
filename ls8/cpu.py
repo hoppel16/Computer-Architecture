@@ -1,6 +1,15 @@
 """CPU functionality."""
 
 import sys
+from enum import Enum, auto
+
+
+class Equal(Enum):
+    EQUAL = auto()
+    LESS = auto()
+    GREATER = auto()
+    NONE = auto()
+
 
 class CPU:
     """Main CPU class."""
@@ -12,16 +21,19 @@ class CPU:
         self.pc = 0
         self.sp = 244
 
+        self.equal = Equal.NONE
+
         self.branchtable = {}
-        self.branchtable[130] = self.deal_with_LDI
-        self.branchtable[71] = self.deal_with_PRN
-        self.branchtable[160] = self.deal_with_ADD
-        self.branchtable[162] = self.deal_with_MUL
+        self.branchtable[1] = self.deal_with_HLT
+        self.branchtable[17] = self.deal_with_RET
         self.branchtable[69] = self.deal_with_PUSH
         self.branchtable[70] = self.deal_with_POP
+        self.branchtable[71] = self.deal_with_PRN
         self.branchtable[80] = self.deal_with_CALL
-        self.branchtable[17] = self.deal_with_RET
-        self.branchtable[1] = self.deal_with_HLT
+        self.branchtable[130] = self.deal_with_LDI
+        self.branchtable[160] = self.deal_with_ADD
+        self.branchtable[162] = self.deal_with_MUL
+        self.branchtable[167] = self.deal_with_CMP
 
     def load(self):
         """Load a program into memory."""
@@ -69,6 +81,8 @@ class CPU:
             self.reg[reg_a] *= self.reg[reg_b]
         elif op == "DIV":
             self.reg[reg_a] /= self.reg[reg_b]
+        elif op == "CMP":
+            return self.reg[reg_a] - self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -134,6 +148,19 @@ class CPU:
 
         self.pc = ret_addr
 
+    def deal_with_CMP(self, op_a, op_b):
+        self.equal = Equal.NONE
+
+        result = self.alu("CMP", op_a, op_b)
+        if result == 0:
+            self.equal = Equal.EQUAL
+        elif result > 0:
+            self.equal = Equal.GREATER
+        else:
+            self.equal = Equal.LESS
+
+        self.pc += 3
+
     def deal_with_HLT(self, foo, bar):
         exit(0)
 
@@ -146,6 +173,6 @@ class CPU:
             self.branchtable[ir](operand_a, operand_b)
         except KeyError:
             print(f"UNKNOWN BYTE: {bin(ir)} ----- {ir}")
-            self.pc += 1
+            exit(1)
 
         self.run()
