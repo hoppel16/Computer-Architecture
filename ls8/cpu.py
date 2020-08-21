@@ -30,6 +30,7 @@ class CPU:
         self.branchtable[70] = self.deal_with_POP
         self.branchtable[71] = self.deal_with_PRN
         self.branchtable[80] = self.deal_with_CALL
+        self.branchtable[85] = self.deal_with_JEQ
         self.branchtable[130] = self.deal_with_LDI
         self.branchtable[160] = self.deal_with_ADD
         self.branchtable[162] = self.deal_with_MUL
@@ -111,7 +112,7 @@ class CPU:
         self.pc += 3
 
     def deal_with_PRN(self, mar, foo):
-        print(self.ram_read(mar))
+        print(f"Printing: {self.ram_read(mar)}")
         self.pc += 2
 
     def deal_with_ADD(self, op_a, op_b):
@@ -160,6 +161,12 @@ class CPU:
             self.equal = Equal.LESS
 
         self.pc += 3
+
+    def deal_with_JEQ(self, op_a, op_b):
+        if self.equal is Equal.EQUAL:
+            self.pc = self.reg[op_a]
+        else:
+            self.pc += 2
 
     def deal_with_HLT(self, foo, bar):
         exit(0)
