@@ -30,6 +30,7 @@ class CPU:
         self.branchtable[70] = self.deal_with_POP
         self.branchtable[71] = self.deal_with_PRN
         self.branchtable[80] = self.deal_with_CALL
+        self.branchtable[84] = self.deal_with_JMP
         self.branchtable[85] = self.deal_with_JEQ
         self.branchtable[86] = self.deal_with_JNE
         self.branchtable[130] = self.deal_with_LDI
@@ -174,6 +175,9 @@ class CPU:
             self.pc = self.reg[op_a]
         else:
             self.pc += 2
+
+    def deal_with_JMP(self, op_a, op_b):
+        self.pc = self.reg[op_a]
 
     def deal_with_HLT(self, foo, bar):
         exit(0)
