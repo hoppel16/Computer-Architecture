@@ -6,8 +6,10 @@ class CPU:
     """Main CPU class."""
 
     def __init__(self):
-        """Construct a new CPU."""
-        pass
+        self.ram = [0] * 256
+        self.reg = [0] * 8
+
+        self.pc = 0
 
     def load(self):
         """Load a program into memory."""
@@ -30,6 +32,11 @@ class CPU:
             self.ram[address] = instruction
             address += 1
 
+    def ram_read(self, mar):
+        return self.reg[mar]
+
+    def ram_write(self, val, mdr):
+        self.reg[mdr] = val
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -61,5 +68,20 @@ class CPU:
         print()
 
     def run(self):
-        """Run the CPU."""
-        pass
+        ir = self.ram[self.pc]
+        operand_a = self.ram[self.pc + 1]
+        operand_b = self.ram[self.pc + 2]
+
+        if ir == 130:
+            self.ram_write(operand_b, operand_a)
+            self.pc += 3
+        elif ir == 71:
+            print(self.ram_read(operand_a))
+            self.pc += 2
+        elif ir == 1:
+            quit(0)
+        else:
+            print(f"UNKNOWN BYTE: {bin(ir)} ----- {ir}")
+            self.pc += 1
+
+        self.run()
